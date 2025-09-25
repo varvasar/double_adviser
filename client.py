@@ -14,15 +14,23 @@ import json
 import threading
 import argparse
 from pathlib import Path
+from dotenv import load_dotenv
 
 import requests
 from pynput import keyboard
 import pyperclip
 from PIL import ImageGrab
 
+load_dotenv()
+
 # Config
 SERVER_URL = os.environ.get('LLM_SERVER_URL', 'http://192.168.1.100:5000/process')
-HOTKEY = {keyboard.Key.ctrl_l, keyboard.Key.alt_l, keyboard.KeyCode.from_char('l')}
+# HOTKEY = {keyboard.Key.ctrl_l, keyboard.Key.alt_l, keyboard.KeyCode.from_char('l')}
+# HOTKEY = {keyboard.Key.ctrl_l, keyboard.Key.ctrl_r}
+HOTKEY = {keyboard.Key.shift_l, keyboard.Key.ctrl_r}
+HOTKEY_CLIPBOARD = {keyboard.Key.ctrl_l, keyboard.Key.ctrl_r}
+HOTKEY_SCREEN = {keyboard.Key.shift_l, keyboard.Key.ctrl_r}
+# HOTKEY = {keyboard.KeyCode.from_char('l')}
 
 # Internal state for hotkey
 current_keys = set()
@@ -60,17 +68,31 @@ def send_image(img: 'PIL.Image.Image', meta):
 
 
 def on_press(key):
-    try:
-        if key in HOTKEY or (isinstance(key, keyboard.KeyCode) and key.char == 'l'):
-            current_keys.add(key)
-        else:
-            current_keys.add(key)
-    except AttributeError:
-        current_keys.add(key)
+    # try:
+    #     if key in HOTKEY or (isinstance(key, keyboard.KeyCode) and key.char == 'l'):
+    #         current_keys.add(key)
+    #     else:
+    #         current_keys.add(key)
+    # except AttributeError:
+    #     current_keys.add(key)
 
-    if all(k in current_keys for k in HOTKEY):
+    current_keys.add(key)
+    if all(k in current_keys for k in HOTKEY_CLIPBOARD):
         # Hotkey triggered
-        threading.Thread(target=handle_capture_and_send, daemon=True).start()
+        print("Clipboard triggered!")
+        threading.Thread(
+            target=handle_capture_and_send,
+            kwargs={"mode": "clipboard"},
+            daemon=True
+        ).start()
+    elif all(k in current_keys for k in HOTKEY_SCREEN):
+        # Hotkey triggered
+        print("Screenshot triggered!")
+        threading.Thread(
+            target=handle_capture_and_send,
+            kwargs={"mode": "screen"},
+            daemon=True
+        ).start()
 
 
 def on_release(key):
@@ -80,31 +102,33 @@ def on_release(key):
         pass
 
 
-def handle_capture_and_send():
+def handle_capture_and_send(mode="clipboard"):
     print('Hotkey pressed — capturing...')
     text = None
-    try:
-        text = pyperclip.paste()
-        if text and len(text.strip()) > 0:
-            meta = {'source': 'clipboard', 'timestamp': time.time()}
-            send_text(text, meta)
-            return
-    except Exception as e:
-        print('Clipboard read failed:', e)
+    if mode == "clipboard":
+        try:
+            text = pyperclip.paste()
+            if text and len(text.strip()) > 0:
+                meta = {'source': 'clipboard', 'timestamp': time.time()}
+                send_text(text, meta)
+                return
+        except Exception as e:
+            print('Clipboard read failed:', e)
 
-    # If no clipboard text, take a screenshot
-    try:
-        img = ImageGrab.grab()
-        meta = {'source': 'screenshot', 'timestamp': time.time()}
-        send_image(img, meta)
-    except Exception as e:
-        print('Screenshot failed:', e)
+
+    if mode == "screen":
+        try:
+            img = ImageGrab.grab()
+            meta = {'source': 'screenshot', 'timestamp': time.time()}
+            send_image(img, meta)
+        except Exception as e:
+            print('Screenshot failed:', e)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--server', help='Server URL (default from env or in code)')
-    parser.add_argument('--hotkey', help='Hotkey characters, e.g. ctrl+alt+l', default=None)
+    parser.add_argument('--hotkey', help='Hotkey CTRL L + CTRL R', default=None)
     args = parser.parse_args()
     global SERVER_URL
     if args.server:
