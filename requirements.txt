@@ -1,0 +1,7 @@
+Flask
+requests
+pynput
+pyperclip
+Pillow
+pytesseract  # optional for OCR; requires Tesseract installed on system
+openai       # optional, if using OpenAI
