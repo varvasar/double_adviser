@@ -5,45 +5,90 @@
   <title>LLM Results</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
       margin: 1em auto;
       max-width: 900px;
-      line-height: 1.5;
+      line-height: 1.6;
+      background: #f4f6f9;
+      color: #222;
     }
+
     h1 {
       text-align: center;
-      margin-bottom: 1em;
+      margin: 1em 0 1.5em 0;
+      font-size: 2em;
+      color: #333;
     }
+
     .block {
-      border: 2px solid #ccc;
-      border-radius: 8px;
-      padding: 1em;
-      margin: 1em 0;
-      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 1.2em;
+      margin: 1.5em 0;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
+
     .meta {
-      font-size: 0.9em;
-      color: #555;
-      margin-bottom: 0.5em;
-    }
-    .prompt {
-      background: #eef;
-      padding: 0.5em;
-      border-radius: 4px;
+      font-size: 0.85em;
+      color: #666;
       margin-bottom: 0.8em;
+      text-align: right;
     }
+
+    .prompt {
+      background: #eef4ff;
+      border-left: 4px solid #4a90e2;
+      padding: 0.8em 1em;
+      border-radius: 6px;
+      margin-bottom: 1.2em;
+    }
+
+    .prompt strong {
+      color: #2a5aa0;
+    }
+
     .result {
-      background: #272822;
+      background: #1e1e1e;
       color: #f8f8f2;
-      padding: 0.5em;
-      border-radius: 4px;
-      white-space: pre-wrap;
+      padding: 1em;
+      border-radius: 8px;
       font-family: Consolas, Monaco, monospace;
-      font-size: 1.1em; /* bigger code font */
+      font-size: 1rem;
       overflow-x: auto;
     }
+
+    .result strong {
+      display: block;
+      margin-bottom: 0.6em;
+      color: #ffd700;
+    }
+
+    /* Markdown code blocks */
     pre {
-      margin: 0;
+      margin: 1em 0;
+    }
+
+    code, pre {
+      font-family: Consolas, Monaco, monospace;
+      font-size: 1.05rem;
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 0.8em;
+      border-radius: 6px;
+      display: block;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    /* Inline code */
+    p code {
+      display: inline;
+      padding: 0.2em 0.4em;
+      font-size: 0.95rem;
+      background: #eee;
+      color: #c7254e;
+      border-radius: 4px;
     }
   </style>
 </head>
