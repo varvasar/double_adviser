@@ -1,8 +1,9 @@
 dotenv
 Flask
-requests
+markdown
+openai
+Pillow
 pynput
 pyperclip
-Pillow
 pytesseract  # optional for OCR; requires Tesseract installed on system
-openai       # optional, if using OpenAI
+requests

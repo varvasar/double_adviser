@@ -1,0 +1,9 @@
+{% for entry in history %}
+  <div class="block" data-id="{{entry.id}}">
+    <div class="meta">Block {{entry.id}} — {{entry.time}}</div>
+    <div><strong>Prompt:</strong></div>
+    <div>{{ entry.prompt_html|safe }}</div>
+    <div><strong>Result:</strong></div>
+    <div>{{ entry.result_html|safe }}</div>
+  </div>
+{% endfor %}

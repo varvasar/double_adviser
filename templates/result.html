@@ -1,31 +1,128 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LLM LAN Receiver</title>
-    <style>
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 24px; }
-      pre { background:#f6f6f8; padding:12px; border-radius:8px; white-space:pre-wrap }
-      .meta { color:#666; font-size:14px }
-    </style>
-  </head>
-  <body>
-    <h1>LLM Result</h1>
-    <div class="meta">Last update: {% if result.timestamp %}{{ result.timestamp | int }}{% else %}never{% endif %} | raw: {{ result.raw }}</div>
-    <h2>AI Output</h2>
-    <pre>{{ result.text }}</pre>
+<head>
+  <meta charset="UTF-8">
+  <title>LLM Results</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 1em auto;
+      max-width: 900px;
+      line-height: 1.5;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1em;
+    }
+    .block {
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      padding: 1em;
+      margin: 1em 0;
+      background: #f9f9f9;
+    }
+    .meta {
+      font-size: 0.9em;
+      color: #555;
+      margin-bottom: 0.5em;
+    }
+    .prompt {
+      background: #eef;
+      padding: 0.5em;
+      border-radius: 4px;
+      margin-bottom: 0.8em;
+    }
+    .result {
+      background: #272822;
+      color: #f8f8f2;
+      padding: 0.5em;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 1.1em; /* bigger code font */
+      overflow-x: auto;
+    }
+    pre {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>LLM Results</h1>
 
-    <script>
-      // Poll for updates every 2.5s
-      setInterval(()=>fetch(location.href).then(r=>r.text()).then(html=>{
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const pre = doc.querySelector('pre');
-        if(pre){ document.querySelector('pre').innerHTML = pre.innerHTML }
-        const meta = doc.querySelector('.meta');
-        if(meta){ document.querySelector('.meta').innerHTML = meta.innerHTML }
-      }), console.warn)
-    </script>
-  </body>
+  <!-- Container for history -->
+  <div id="history">
+    {% for e in history %}
+      <div class="block" data-id="{{ e.id }}">
+        <div class="meta">Block {{ e.id }} — {{ e.time }}</div>
+        <div class="prompt">
+          <strong>Prompt:</strong>
+          <div>{{ e.prompt_html|safe }}</div>
+        </div>
+        <div class="result">
+          <strong>Result:</strong>
+          <div>{{ e.result_html|safe }}</div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <script>
+    let latestId = null;
+
+    function extractBlocksFromHTML(html) {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      return Array.from(doc.querySelectorAll('#history .block'));
+    }
+
+    async function checkForUpdates() {
+      try {
+        const res = await fetch(location.href, { cache: 'no-store' });
+        if (!res.ok) return;
+        const html = await res.text();
+        const newBlocks = extractBlocksFromHTML(html);
+        if (!newBlocks.length) return;
+
+        const container = document.querySelector('#history');
+        if (!container) return;
+
+        const topNewId = parseInt(newBlocks[0].dataset.id);
+
+        if (latestId === null) {
+          // First load
+          latestId = topNewId;
+          container.innerHTML = '';
+          newBlocks.forEach(b => container.appendChild(b));
+          return;
+        }
+
+        if (topNewId > latestId) {
+          // Only prepend blocks with higher ID than latestId
+          const blocksToAdd = [];
+          for (let b of newBlocks) {
+            const bId = parseInt(b.dataset.id);
+            if (bId <= latestId) break;
+            blocksToAdd.push(b);
+          }
+          blocksToAdd.reverse().forEach(b => container.insertBefore(b, container.firstChild));
+          latestId = topNewId;
+        }
+        // If no new blocks, do nothing → preserves selection
+      } catch (err) {
+        console.warn('checkForUpdates failed', err);
+      }
+    }
+
+    // Poll every 3s
+    setInterval(checkForUpdates, 3000);
+
+    // Also refresh when tab becomes visible
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) checkForUpdates();
+    });
+
+    // Initial load
+    checkForUpdates();
+</script>
+</body>
 </html>
